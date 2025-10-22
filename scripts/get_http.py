@@ -8,19 +8,21 @@ import json
 INFO_PATH = '/data/virtual_machines/vm_info'
 
 # parse arguments
-parser = argparse.ArgumentParser(description='Extract HTTP requests from PCAP file')
+parser = argparse.ArgumentParser(description='Extract HTTP requests from traffic capture files')
 parser.add_argument('-n', '--name', help='Name of VM', required=True)
-parser.add_argument('-o', '--output', help='Path to output .csv file, not required, default is traffic folder')
-parser.add_argument('-a', '--append', help='Append to existing file')
+parser.add_argument('-o', '--output',
+                    help='Path to output .csv file (default is "http.csv" in the VM\'s traffic folder)')
+parser.add_argument('-f', '--pcap-files', nargs="*",
+                    help='Use given PCAP file(s) (default is to search all "traffic.pcap" files in the VM\'s traffic folder')
 args = parser.parse_args()
 
 
-def find_files(filename, search_path):
+def find_files(filename, search_path): # FIXME: use GLOB "????-??-??__*__*/traffic.pcap", so it's the same as in process_data.sh
     result = []
     for root, dirs, files in os.walk(search_path):
         if filename in files:
             result.append(os.path.join(root, filename))
-    print(f'Files: {result}')
+    #print(f'Files: {result}')
     return result
 
 # find info file
@@ -29,11 +31,16 @@ if not os.path.exists(info_file_path):
     print('Info file not found:', info_file_path)
     sys.exit(1)
 info = json.load(open(info_file_path))
+
+# load information about VM from json file
+os_family = info['os_family']
+os_type = info['os_type']
+os_version = info['os_version']
 traffic_folder = info['traffic_folder']
 
 # find pcap files
-if args.append:
-    pcap_files = [args.append]
+if args.pcap_files:
+    pcap_files = args.pcap_files
 else:
     pcap_files = find_files('traffic.pcap', traffic_folder)
 
@@ -43,19 +50,10 @@ if args.output:
 else:
     output_file = os.path.join(traffic_folder, 'http.csv')
 
-if not os.path.exists(output_file):
-    try:
-        with open(output_file, 'w') as f:
-            f.write('os_family,os_type,os_version,user-agent,host,uri\n')
-    except FileNotFoundError:
-        print('Output file not found and could not be created')
-        sys.exit(1)
-
-
 http = set()
 
 for pcap_file in pcap_files:
-    print('Extracting HTTP requests from PCAP file...')
+    print(f'processing {pcap_file} ...')
 
     # load pcap file
     capture = pyshark.FileCapture(pcap_file, display_filter='http.request')
@@ -74,23 +72,7 @@ for pcap_file in pcap_files:
         except AttributeError:
             continue
 
-    capture.close()  
-    print('HTTP requests extracted:', len(http))
-
-# load information about VM from json file
-os_family = info['os_family']
-os_type = info['os_type']
-os_version = info['os_version']
-
-if args.append:
-    reader = csv.reader(open(output_file, 'r'))
-    first_line = True
-    for row in reader:
-        if first_line:
-            first_line = False
-            continue
-        row = (row[3], row[4], row[5])
-        http.add(row)
+    capture.close()
 
 http = sorted(http)
 
@@ -99,3 +81,5 @@ with open(output_file, 'w') as f:
     for i in http:
         record = [os_family, os_type, os_version, f'"{i[0]}"', i[1], i[2]]
         f.write(','.join(record) + '\n')
+
+print(f'Finished, {len(http)} unique HTTP requests stored into "{output_file}"')

@@ -9,11 +9,11 @@ import pandas as pd
 INFO_PATH = '/data/virtual_machines/vm_info'
 
 # parse arguments
-parser = argparse.ArgumentParser(description='Extract TLS information from VM traffic (from CSV flow files)')
+parser = argparse.ArgumentParser(description='Extract DNS requests from VM traffic (from CSV flow files)')
 parser.add_argument('-n','--name', help='Name of the virtual machine to process.', required=True)
-parser.add_argument('-o', '--output', help='Path to output .csv file, not required, default is "tls.csv" in the VM\'s traffic folder')
+parser.add_argument('-o', '--output', help='Path to output .csv file, not required, default is "dns.csv" in the VM\'s traffic folder')
 parser.add_argument('-f', '--flow-files', nargs="*",
-                    help='Use given CSV file(s) with flow data (default is to search all "flows.csv" files in the VM\'s traffic folder')
+                    help='Use given CSV file(s) with flwo data (default is to search all "flows.csv" files in the VM\'s traffic folder')
 args = parser.parse_args()
 
 
@@ -47,7 +47,7 @@ else:
 if args.output:
     output_file = args.output
 else:
-    output_file = os.path.join(traffic_folder, 'tls.csv')
+    output_file = os.path.join(traffic_folder, 'dns.csv')
 
 # test write permission
 try:
@@ -57,17 +57,16 @@ except Exception as e:
     print(e)
     sys.exit(1)
 
-# Extract the TLS data
+# Extract the DNS data
 all_data = pd.DataFrame()
-columns = ['uint16 TLS_VERSION', 'string TLS_ALPN', 'bytes TLS_JA3', 'string TLS_SNI']
+columns = ['string DNS_NAME']
 
 for flow_file in flow_files:
     print(f"processing {flow_file} ...")
     df = pd.read_csv(flow_file, usecols=columns)
-    # rename columns - remove data types (e.g. "uint16 TLS_VERSION" -> "TLS_VERSION"
+    # rename columns - remove data types (e.g. "string DNS_NAME" -> "DNS_NAME"
     df.rename(lambda x: x.split()[1], axis='columns', inplace=True)
-    df['TLS_VERSION'] = df['TLS_VERSION'].replace(0, pd.NA)
-    df = df.dropna(how='all').drop_duplicates()
+    df = df.dropna().drop_duplicates()
     all_data = pd.concat([all_data, df])
 
 all_data.drop_duplicates(inplace=True)
@@ -79,4 +78,4 @@ all_data.insert(0, 'os_family', os_family)
 
 all_data.to_csv(output_file, index=False)
 
-print(f'Finished, {len(all_data)} unique TLS requests saved to {output_file}')
+print(f'Finished, {len(all_data)} unique DNS requests saved to {output_file}')

@@ -1,6 +1,15 @@
 
 # CESNET-IDLE-OS-TRAFFIC Toolset
 
+This is a set of tools used to create the [CESNET Idle OS traffic](https://zenodo.org/records/15004765) dataset.
+The dataset contains captured network traffic of various operating systems (OS) in their idle state, i.e. without any user activity.
+
+The toolset allows to create a set of virtual machines (VM) in VirtualBox, run them for a specified amount of time and capture the traffic they generate.
+There are also scripts to process the data -- convert raw packet captures (PCAPs) to rich flow records using [ipfixprobe](https://cesnet.github.io/ipfixprobe/) and extract details of DNS, HTTP and TLS traffic.
+
+
+---
+
 **VM provider:** VirtualBox
 
 For a list of available VMs, run the command `list_vms.sh`. To list only running VMs, run `list_vms.sh -r`. All scripts can be found in the `/data/virtual_machines/scripts/` folder. Captured traffic can be found in the `/data/virtual_machines/traffic/` folder (see the *Captured Data* section).
@@ -14,12 +23,12 @@ Before running any VM and capturing its network traffic, the info file must be c
 {
 	"vm_name": <vm_name>,
 	"source": <source>, 
-	"link": <link>, 
-	"hash": <hash_algorithm>:<hash>, 
+	"link": <link>,
+	"hash": <hash_algorithm>:<hash>,
 	"vagrant_box": <vagrant_box>,
-	"os_family": <os_family>,   
-	"os_type": <os_type>,                        
-	"os_version": <os_version>, 
+	"os_family": <os_family>,
+	"os_type": <os_type>,
+	"os_version": <os_version>,
 	"IPv4": <ipv4>,
 	"MAC": <mac>,
 	"traffic_folder": <traffic_folder>
@@ -79,11 +88,7 @@ If the time to capture traffic is given, the virtual machine will run and traffi
 
 ## Stop VM and capture
 
-If the power-off of the VM wasn't planned when starting the VM, this script should be used to stop the VM. This script not only stops the VM but also ensures the correct end of capturing network traffic and processing of files with captured data. The following files are created from the PCAPs:
-
-- **Flow Data (`flow.csv`)**  
-- **HTTP Traffic (`http_traffic.pcap`)**
-- **TLS Traffic (`tls_traffic.pcap`)**
+If the power-off of the VM wasn't planned when starting the VM, this script should be used to stop the VM and end capturing network traffic. Captured traffic is then available in the `traffic.pcap` file in corresponding VM directory.
 
 ### Usage of the `stop_vm.sh` script:
 
@@ -94,74 +99,40 @@ stop_vm.sh <vm_name>
 This script allows you to stop multiple virtual machines with a single command. You can specify the names of the virtual machines separated by commas (without spaces) as the `<vm_name>` argument. If you want to stop all running virtual machines, pass `all` as the `<vm_name>` argument.
 
 
-### Usage of `get_http.py` script
+## Data processing
 
-This script extracts **HTTP requests** from PCAP files and saves them in a CSV file. It identifies HTTP traffic, extracts some fields (User-Agent, Host, and URI), and organizes them along with VM operating system details.
+After raw data was captured for one or all VMs, the `process_data.sh` script can be used to compute flow records and extract DNS, HTTP and TLS data from it.
 
-#### Running the Script
-
-Use the following command to run the script:
-
-```sh
-python extract_http.py -n <VM_NAME> [OPTIONS]
+```bash
+process_data.sh <vm_name> [<vm_name> ...]
 ```
 
-#### Parameters
+Specify one or more VMs whose data should be processed (`traffic.pcap` files in individual capture subdirectories). The script always processes all captures of given VM.
+To process data of all VMs, pass `all` the `<vm_name>` argument.
+To list names of all defined VMs, pass `--list`.
 
-| Parameter        | Description                                           |
-|------------------|-------------------------------------------------------|
-| `-n`, `--name`   | Name of the VM (used to locate PCAP files). Required. |
-| `-o`, `--output` | Path to the output CSV file (default: traffic folder) |
-| `-a`, `--append` | Append to an existing file instead of overwriting     |
+The script first computes flow data from each capture (`traffic.pcap` file) of given VM(s). The [ipfixprobe](https://ipfixprobe.cesnet.cz/) exporter with several plugins is used.
 
+Then, `get_dns.py`, `get_http.py` and `get_tls.py` scripts are called to extract data about selected application-layer requests made by the VM, which get written into `dns.csv`, `http.csv` and `tls.csv` files. If there are multiple captures (`.pcap` files) from one VM, these CSV files contain requests from all of them (unique entries only).
 
-#### Output Format
+The `get_*.py` scripts normally aren't run directly. If you need them, the `--help` parameter will tell you how to use them.
 
-The extracted HTTP request data is saved in a CSV file with the following columns:
+## Merging CSV files
 
-```
-os_family, os_type, os_version, user-agent, host, uri
-```
+When data from all VMs are processed, the `merge_csv_files.sh` script can be used to merge data of application-layer requests of individual OSes (VMs) into a single one.
 
-### Usage of `merge_http.py` script
-
-This script merges all `http.csv` files from the **traffic folder** into a single CSV file. Searches for all `http.csv` files in the traffic folder and its subdirectories. Merges them into a single CSV file, keeping only the first file's header. Outputs the final merged file to the specified location.
-
-#### Running the Script
-
-```sh
-merge_http.sh -o <output_file>
-```
-
-
-### Usage of `get_tls.py` script
-
-This script extracts TLS information from virtual machines managed by VirtualBox and saves it to CSV files. It processes network flow data, extracts TLS-specific fields, and organizes them along with VM operating system details.
-
-#### Running the Script
-
-Use the following command to run the script:
-
-```sh
-python extract_tls.py [OPTIONS]
-```
-
-#### Parameters
-
-| Parameter        | Description                                                                 |
-|------------------|-----------------------------------------------------------------------------|
-| `-n`, `--name`   | Name of the virtual machine to process. If not provided, all VMs will be processed. |
-| `-o`, `--output` | Path to the output CSV file. If not specified, the file is saved in the traffic folder. |
-
-#### Output Format
-
-The extracted TLS data is saved in a CSV file with the following columns:
+Files `merged_dns.csv`, `merged_http.csv` and `merged_tls.csv` are created, containing the following fields:
 
 ```
-os_family, os_type, os_version, TLS_VERSION, TLS_ALPN, TLS_JA3, TLS_SNI
-```
+merged_dns.csv:
+  os_family, os_type, os_version, DNS_NAME
 
-The script ensures that duplicate entries are removed before saving the final output.
+merged_http.csv:
+  os_family, os_type, os_version, user-agent, host, uri
+
+merged_tls.csv:
+  os_family, os_type, os_version, TLS_VERSION, TLS_ALPN, TLS_JA3, TLS_SNI
+```
 
 
 ## Add a New VM via Vagrant

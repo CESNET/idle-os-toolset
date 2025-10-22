@@ -257,6 +257,7 @@ EOF
 
     # set traffic capture
     traffic_file="${traffic_folder}/${file_name}"
+    echo "Traffic will be captured into '${traffic_file}'"
     su - $user -c "touch ${traffic_file}"
     su - $user -c "chmod 666 ${traffic_file}"
     su - $user -c "VBoxManage modifyvm ${vm_name} --nictrace1 on --nictracefile1 ${traffic_file}"
@@ -270,6 +271,7 @@ EOF
 
     # Capture traffic for the given time
     if [ "$capture_time" -ne 0 ]; then
+        echo "VM will be stopped after $sleep_time seconds"
         (sleep $sleep_time
         /data/virtual_machines/scripts/stop_vm.sh $vm_name > /dev/null 2>&1) &
     fi

@@ -104,6 +104,7 @@ else
 fi
 
 # wait for the virtual machine to boot
+echo "Waiting for machine to boot (60 seconds), then will get info about OS, MAC and IP addresses ..."
 sleep 60
 
 guest_os=$(su - $vmuser -c "VBoxManage showvminfo '$VB_NAME'" | grep "Guest OS" | awk -F': ' '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//')
