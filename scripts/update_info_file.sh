@@ -1,8 +1,8 @@
 #!/usr/bin/bash
 
 user="vmuser"
-info_folder="data/virtual_machines/vm_info"
-traffic_folder="data/virtual_machines/traffic"
+info_folder="vm_info"
+traffic_folder="traffic"
 
 
 # get the parameters
@@ -21,7 +21,10 @@ usage() {
     exit 1
 }
 
+echo "starting update_info_file.sh"
+
 vm_name=$1
+echo $vm_name
 if [ -z "$vm_name" ]; then
     echo "Error: Missing required parameter"
     usage

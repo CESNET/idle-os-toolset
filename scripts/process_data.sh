@@ -1,9 +1,13 @@
 #!/usr/bin/bash
 
 user="vmuser"
-info_path="data/virtual_machines/vm_info"
-script_path="data/virtual_machines/scripts"
+
+home_dir=$(su - $user -c "pwd")
+
+info_path="$home_dir/vm_info"
+script_path="$home_dir/scripts"
 logger_bin=""
+
 
 find_logger_bin() {
     if [[ -x "/usr/local/bin/logger" ]]; then
@@ -71,6 +75,7 @@ for vm_name in $vm_names; do
     echo "Processing captured traffic of the virtual machine $vm_name ..."
 
     traffic_dir="$(jq -r .traffic_folder "$info_path/$vm_name.json")"
+    traffic_dir="${home_dir}/${traffic_dir}"
     if [[ "$traffic_dir" == "" ]]; then echo "ERROR: Can't find info for $vm_name"; continue; fi
 
     # Loop over all runs/traffic captures (stored in directories named "YYYY-MM-DD__imagesource__imagename")

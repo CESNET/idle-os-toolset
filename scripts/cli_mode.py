@@ -6,8 +6,8 @@ import shlex
 
 
 BASE_ROOT = os.path.expanduser("~")
-OS_INFO_BASE = os.path.join(BASE_ROOT, "data", "virtual_machines", "os_info")
-TRAFFIC_BASE = os.path.join(BASE_ROOT, "data", "virtual_machines", "traffic")
+OS_INFO_BASE = os.path.join(BASE_ROOT, "os_info")
+TRAFFIC_BASE = os.path.join(BASE_ROOT, "traffic")
 
 
 class Colors:
@@ -171,7 +171,7 @@ def edit_os_info(vm_name):
     os.removedirs(traffic_folder) if os.path.isdir(traffic_folder) else None
     # After saving, run: su - vmuser -c "./${PATH_SCRIPTS}update_info_file.sh $VB_NAME -f '$OS_FAMILY' -t '$OS_TYPE' -v '$OS_VERSION'"
     vmuser = "vmuser"
-    path_scripts = "data/virtual_machines/scripts"
+    path_scripts = "scripts"
     os_family = os_info.get("Os_Family", "")
     os_type = os_info.get("Os_Type", "")
     os_version = os_info.get("Os_Version", "")

@@ -19,7 +19,7 @@ import shlex
 
 # Base path
 BASE_ROOT = os.path.expanduser("~")
-OS_INFO_BASE = os.path.join(BASE_ROOT, "data", "virtual_machines", "os_info")
+OS_INFO_BASE = os.path.join(BASE_ROOT, "os_info")
 
 
 def check_user():

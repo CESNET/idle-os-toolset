@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 # Merge files with extracted L7 requests (dns.csv, http.csv, tls.csv) from individual OSes into a single file.
 
-TRAFFIC_PATH='data/virtual_machines/traffic'
+TRAFFIC_PATH='traffic'
 output_dir="$TRAFFIC_PATH"
 
 # Re‑execute this script as user "vmuser" using su -c, preserving

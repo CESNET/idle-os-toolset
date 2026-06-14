@@ -9,8 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 home=os.path.expanduser("~")
-os_info_path=home+"/data/virtual_machines/os_info/"
-vm_list_path=home+"/data/virtual_machines/vm_list.md"
+os_info_path=home+"/os_info/"
+vm_list_path=home+"/vm_list.md"
 
 def generate_commands(vagrant_box, vm_name):
     prompt = f"""

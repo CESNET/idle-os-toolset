@@ -7,11 +7,11 @@ NC='\e[0m' # Reset
 
 VAGRANT_NAME=""
 VB_NAME=""
-PATH_VAGRANT_BASE="data/virtual_machines/vagrant/"
-PATH_TRAFFIC="data/virtual_machines/traffic/"
-PATH_SCRIPTS="data/virtual_machines/scripts/"
-PATH_INFO="data/virtual_machines/vm_info/"
-PATH_OS_INFO="data/virtual_machines/os_info/"
+PATH_VAGRANT_BASE="vagrant/"
+PATH_TRAFFIC="traffic/"
+PATH_SCRIPTS="scripts/"
+PATH_INFO="vm_info/"
+PATH_OS_INFO="os_info/"
 vmuser="vmuser"
 
 # Show help and usage
@@ -174,7 +174,7 @@ fi
 
 # wait for the virtual machine to boot
 echo "Waiting for machine to boot (60 seconds), then will get info about OS, MAC and IP addresses ..."
-sleep 60
+sleep 30
 
 guest_os=$(su - $vmuser -c "VBoxManage showvminfo '$VB_NAME'" | grep "Guest OS" | awk -F': ' '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//')
 mac=$(su - $vmuser -c "VBoxManage guestproperty get '$VB_NAME' /VirtualBox/GuestInfo/Net/0/MAC")
@@ -215,16 +215,32 @@ echo -e "${GREEN}Virtual machine created successfully.${NC}"
 
 OS_INFO_FILE="${PATH_OS_INFO}${VB_NAME}/os_info.json"
 
-json_content=$(su - $vmuser -c " cat $OS_INFO_FILE")
+json_content=$(su - $vmuser -c "cat $OS_INFO_FILE")
 
-if [ ! -z "$json_content" ]; then
-  OS_FAMILY=$(echo "$json_content" | jq -r '.Os_Family // empty' | tr ' ' '_' )
-  OS_TYPE=$(echo "$json_content" | jq -r '.Os_Type // empty' | tr ' ' '_' )
-  OS_VERSION=$(echo "$json_content" | jq -r '.Os_Version // empty' | tr ' ' '_' )
-  su - $vmuser -c "./${PATH_SCRIPTS}update_info_file.sh $VB_NAME -f '$OS_FAMILY' -t '$OS_TYPE' -v '$OS_VERSION'"
-else
-  echo -e "${RED}Error: OS info file not created or is empty. Cannot update vm info.${NC}"
+if [ -z "$json_content" ]; then
+  su - $vmuser -c "mkdir -p ${PATH_OS_INFO}${VB_NAME}/"
+  su - $vmuser -c "touch ${OS_INFO_FILE}"
 fi
+
+OS_FAMILY=$(echo "$json_content" | jq -r '.Os_Family // empty' | tr ' ' '_' )
+OS_TYPE=$(echo "$json_content" | jq -r '.Os_Type // empty' | tr ' ' '_' )
+OS_VERSION=$(echo "$json_content" | jq -r '.Os_Version // empty' | tr ' ' '_' )
+echo $VB_NAME
+echo $OS_FAMILY
+echo $OS_TYPE
+echo $OS_VERSION
+
+su - $vmuser -c "./${PATH_SCRIPTS}update_info_file.sh $VB_NAME -f '$OS_FAMILY' -t '$OS_TYPE' -v '$OS_VERSION'"
+
+
+# if [ ! -z "$json_content" ]; then
+#   OS_FAMILY=$(echo "$json_content" | jq -r '.Os_Family // empty' | tr ' ' '_' )
+#   OS_TYPE=$(echo "$json_content" | jq -r '.Os_Type // empty' | tr ' ' '_' )
+#   OS_VERSION=$(echo "$json_content" | jq -r '.Os_Version // empty' | tr ' ' '_' )
+#   su - $vmuser -c "./${PATH_SCRIPTS}update_info_file.sh $VB_NAME -f '$OS_FAMILY' -t '$OS_TYPE' -v '$OS_VERSION'"
+# else
+#   echo -e "${RED}Error: OS info file not created or is empty. Cannot update vm info.${NC}"
+# fi
 
 # vm poweroff
 su - $vmuser -c "vboxmanage controlvm '$VB_NAME' poweroff"

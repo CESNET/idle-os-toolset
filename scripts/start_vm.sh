@@ -6,8 +6,8 @@ YELLOW='\e[33m'
 NC='\e[0m'
 
 user="vmuser"
-traffic_path="data/virtual_machines/traffic"
-info_path="data/virtual_machines/vm_info"  
+traffic_path="traffic"
+info_path="vm_info"  
 capture_time=0
 minutes=true
 seconds=false
@@ -275,7 +275,7 @@ EOF
     if [ "$capture_time" -ne 0 ]; then
         echo "VM will be stopped after $sleep_time seconds"
         (sleep $sleep_time
-        su - $user -c "data/virtual_machines/scripts/stop_vm.sh $vm_name" > /dev/null 2>&1) &
+        su - $user -c "scripts/stop_vm.sh $vm_name" > /dev/null 2>&1) &
     fi
 
     

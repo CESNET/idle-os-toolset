@@ -10,9 +10,9 @@ from tkinter import ttk, messagebox
 
 # Base paths
 BASE_ROOT = os.path.expanduser("~")
-OS_INFO_BASE = os.path.join(BASE_ROOT, "data", "virtual_machines", "os_info")
-VM_INFO_BASE = os.path.join(BASE_ROOT, "data", "virtual_machines", "vm_info")
-TRAFFIC_BASE = os.path.join(BASE_ROOT, "data", "virtual_machines", "traffic")
+OS_INFO_BASE = os.path.join(BASE_ROOT, "os_info")
+VM_INFO_BASE = os.path.join(BASE_ROOT, "vm_info")
+TRAFFIC_BASE = os.path.join(BASE_ROOT, "traffic")
 
 
 class OSInfoGUI(tk.Tk):
@@ -403,7 +403,7 @@ class OSInfoGUI(tk.Tk):
             return
 
         vmuser = "vmuser"
-        path_scripts = "data/virtual_machines/scripts"
+        path_scripts = "scripts"
         os_family = data["Os_Family"]
         os_type = data["Os_Type"]
         os_version = data["Os_Version"]

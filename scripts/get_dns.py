@@ -9,7 +9,7 @@ import getpass
 import shlex
 
 HOME = os.path.expanduser("~")
-INFO_PATH = os.path.join(HOME, 'data', 'virtual_machines', 'vm_info')
+INFO_PATH = os.path.join(HOME, 'vm_info')
 
 
 def ensure_vmuser():

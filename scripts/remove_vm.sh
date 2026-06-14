@@ -1,9 +1,9 @@
 #!/usr/bin/bash
 
 user="vmuser"
-vagrant_path="data/virtual_machines/vagrant"
-os_info_path="data/virtual_machines/os_info"
-vm_info_path="data/virtual_machines/vm_info"
+vagrant_path="vagrant"
+os_info_path="os_info"
+vm_info_path="vm_info"
 
 # get the parameters
 usage() {
