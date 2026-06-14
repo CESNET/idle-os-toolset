@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual env
+venv/
+.env
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# Vagrant files
+vagrant/
+
+# Network traffic
+traffic/
+
+# Info abou VMs
+vm_info/
+os_info/
+
+.android/
+.vagrant.d/
+.config/
+
+.bash_history
+.bash_profile
+.bashrc
+.viminfo
