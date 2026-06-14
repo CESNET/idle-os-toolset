@@ -2,9 +2,9 @@ import argparse
 import json
 import os
 from litellm import completion
+from dotenv import load_dotenv
 
-
-os.environ["GROQ_API_KEY"] = "API-KEY"
+load_dotenv()
 
 with open(os.path.expanduser("vagrant_list.txt"), "r") as f:
     vagrant_boxes = [line.strip() for line in f if line.strip()]

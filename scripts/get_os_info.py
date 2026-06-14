@@ -3,10 +3,11 @@ import os
 import json
 import subprocess
 import shlex
-
-
 from litellm import completion
-os.environ["GROQ_API_KEY"] = "API-KEY"
+from dotenv import load_dotenv
+
+load_dotenv()
+
 home=os.path.expanduser("~")
 os_info_path=home+"/data/virtual_machines/os_info/"
 vm_list_path=home+"/data/virtual_machines/vm_list.md"
