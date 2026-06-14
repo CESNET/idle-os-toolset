@@ -7,6 +7,9 @@ The dataset contains captured network traffic of various operating systems (OS) 
 The toolset allows to create a set of virtual machines (VM) in VirtualBox, run them for a specified amount of time and capture the traffic they generate.
 There are also scripts to process the data -- convert raw packet captures (PCAPs) to rich flow records using [ipfixprobe](https://cesnet.github.io/ipfixprobe/) and extract details of DNS, HTTP and TLS traffic.
 
+Instalation guide in [INSTALL.md](INSTALL.md).
+
+Versions of the packages and tools are listed in [DEPENDENCIES.md](DEPENDENCIES.md).
 
 ---
 
@@ -135,9 +138,46 @@ merged_tls.csv:
 ```
 
 
+## Generate VM Names for Vagrant Boxes
+
+When you have a list of Vagrant boxes and need suggested VM names, `get_vm_names.py` can help. It reads Vagrant box names from `vagrant_list.txt` (one box per line) and uses an AI model to suggest VM names in the `<os_family>_<os_version>` format. The script then updates `vagrant_list.txt` with lines in the `vagrant_box;vm_name` format, ready to be used by `create_multiple_boxes.sh`.
+
+### Usage
+
+```bash
+python3 get_vm_names.py
+```
+
+The script reads from `vagrant_list.txt` in the current directory and overwrites it with lines in the following format:
+
+```
+vagrant_box_1;vm_name_1
+vagrant_box_2;vm_name_2
+```
+
+Example: `ubuntu/bionic64;ubuntu_bionic`
+
+## Create Multiple VMs from Vagrant
+
+To create multiple VMs at once from a list, use `create_multiple_boxes.sh`. It reads `vagrant_list.txt` from the current directory, where each line must follow the `vagrant_box;vm_name` format (as produced by `get_vm_names.py`), and calls `new_vagrant.sh` for each entry.
+
+### Usage
+
+```bash
+./create_multiple_boxes.sh
+```
+
+The `vagrant_list.txt` file must exist in the current directory. Each non-empty line should follow the format:
+
+```
+vagrant_box;vm_name
+```
+
+Example: `ubuntu/focal64;ubuntu_focal`
+
 ## Add a New VM via Vagrant
 
-A new virtual machine can be added manually via the VirtualBox manager or via Vagrant. To add a new VM via Vagrant, the script `new_vagrant` can be used. This script will create a folder and `Vagrantfile` with configuration for the VM, and then the VM will be created. The script also creates a folder for storing files containing captured network traffic and a file with information about the VM, such as the used VagrantBox, IP address, MAC address, and OS.
+A new virtual machine can be added manually via the VirtualBox manager or via Vagrant. To add a new VM via Vagrant, the script `new_vagrant` can be used. This script will create a folder and `Vagrantfile` with configuration for the VM, and then the VM will be created. The script also creates a folder for storing files containing captured network traffic and a file with information about the VM, such as the used VagrantBox, IP address, MAC address, and OS. The script uses get_os_info.py to retrieve OS information and update_info_file.sh to include this information in the file.
 
 ### Usage:
 
@@ -211,5 +251,42 @@ python3 get_vms_info.py [-p | --path] [-o | --output]
 | -p           | --path      | Path to the folder with VMs info files |
 | -o           | --output    | Output Markdown file |
 
+## Get OS Information of a VM
+
+`get_os_info.py` uses an AI model to automatically determine the OS family, type, and version of a Vagrant VM. It generates the appropriate commands for the given box, executes them inside the VM (via `vagrant ssh`, `vagrant winrm`, or `adb` for Android), and then asks the AI to interpret the output and save the result.
+
+The output files are stored in `~/data/virtual_machines/os_info/<vm_name>/`:
+- `commands.json` – list of commands generated for the VM
+- `commands_execute.json` – raw output of those commands
+- `os_info.json` – final OS family, type, and version
+
+### Usage of `get_os_info.py`
+
+```bash
+python3 get_os_info.py -v <vagrant_box> -b <vm_name>
+```
+
+| Short Option | Long Option      | Description                                              |
+|--------------|------------------|----------------------------------------------------------|
+| -v           | --vagrant_box    | Vagrant box name (e.g., `ubuntu/bionic64`)               |
+| -b           | --vm_name        | Virtual machine name (e.g., `ubuntu_bionic`)             |
+
+## View and Edit OS Information
+
+`os_info.py` provides an interactive tool to view and edit the OS information and command outputs gathered by `get_os_info.py`. It can be launched in GUI mode (default, requires a graphical environment) or in CLI mode for terminal use. Once OS information is confirmed or edited and saved, the script automatically calls `update_info_file.sh` to update the VM info file.
+
+### Usage of `os_info.py`
+
+```bash
+python3 os_info.py              # Launch GUI (default)
+python3 os_info.py --gui        # Launch GUI (explicit)
+python3 os_info.py --cli        # Launch CLI (terminal mode)
+python3 os_info.py -h           # Show help
+```
+
+| Option  | Description                    |
+|---------|--------------------------------|
+| --gui   | Launch GUI mode (default)      |
+| --cli   | Launch CLI mode (terminal)     |
 
 

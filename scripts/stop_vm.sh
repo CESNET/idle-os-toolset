@@ -1,6 +1,8 @@
 #!/usr/bin/bash
 
 user="vmuser"
+home_path=$(su - $user -c "pwd")
+script_path="${home_path}/scripts"
 
 # get the parameters
 usage() {
@@ -89,6 +91,9 @@ EOF
 "
 
     echo "Virtual machine $vm_name stopped, traffic capture ended."
+
+    # start processing captured data
+    $script_path/process_data.sh $vm_name
 
 done
 echo "-----------------------------------------------------------------"

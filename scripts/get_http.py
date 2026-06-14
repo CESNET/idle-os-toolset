@@ -4,8 +4,28 @@ import os
 import sys
 import argparse
 import json
+import getpass
+import shlex
 
-INFO_PATH = '/data/virtual_machines/vm_info'
+HOME = os.path.expanduser("~")
+INFO_PATH = os.path.join(HOME, 'vm_info')
+
+
+def ensure_vmuser():
+    """Re-execute this script as user 'vmuser' if needed."""
+    if getpass.getuser() == "vmuser":
+        return
+
+    script_path = os.path.abspath(__file__)
+    base_args = [sys.executable, script_path] + sys.argv[1:]
+    cmd_str = " ".join(shlex.quote(a) for a in base_args)
+    su_cmd = ["su", "-", "vmuser", "-c", cmd_str]
+
+    print("Re-running script as user 'vmuser'...")
+    os.execvp("su", su_cmd)
+
+
+ensure_vmuser()
 
 # parse arguments
 parser = argparse.ArgumentParser(description='Extract HTTP requests from traffic capture files')

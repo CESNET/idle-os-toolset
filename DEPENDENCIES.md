@@ -1,0 +1,9 @@
+jq: 1.6
+VirtualBox: 7.2.6r172322
+Vagrant: 2.4.9
+pandas: 2.3.3
+pyshark: 0.6
+litellm: 1.82.0
+python3-tk: 3.10.8
+python-is-python3: 3.9.2
+tshark: 3.6.2

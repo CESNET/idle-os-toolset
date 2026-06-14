@@ -6,8 +6,8 @@ YELLOW='\e[33m'
 NC='\e[0m'
 
 user="vmuser"
-traffic_path="/data/virtual_machines/traffic"
-info_path="/data/virtual_machines/vm_info"  
+traffic_path="traffic"
+info_path="vm_info"  
 capture_time=0
 minutes=true
 seconds=false
@@ -119,8 +119,10 @@ for vm_name in "${vm_array[@]}"; do
 
     echo "Starting the virtual machine $vm_name"
 
+    home=$(su - $user -c "echo ~")
+
     # variables for traffic capture
-    info_path_vm="${info_path}/${vm_name}.json"
+    info_path_vm="${home}/${info_path}/${vm_name}.json"
     date_name=$(date +$date_format)
     file_name="traffic.pcap"
 
@@ -146,7 +148,7 @@ for vm_name in "${vm_array[@]}"; do
             echo -e "${YELLOW}The info file is located at $info_path_vm. You can fill in the missing information manually or use script /data/virtual_machines/scripts/update_info_file.sh.${NC}"
             continue
         fi
-        traffic_folder="${traffic_path}/${family}__${type}__${version}"
+        traffic_folder="${home}/${traffic_path}/${family}__${type}__${version}"
     fi
 
     # create folder path for this capture
@@ -256,7 +258,7 @@ EOF
     fi
 
     # set traffic capture
-    traffic_file="${traffic_folder}/${file_name}"
+    traffic_file="${home}/${traffic_folder}/${file_name}"
     echo "Traffic will be captured into '${traffic_file}'"
     su - $user -c "touch ${traffic_file}"
     su - $user -c "chmod 666 ${traffic_file}"
@@ -273,7 +275,7 @@ EOF
     if [ "$capture_time" -ne 0 ]; then
         echo "VM will be stopped after $sleep_time seconds"
         (sleep $sleep_time
-        /data/virtual_machines/scripts/stop_vm.sh $vm_name > /dev/null 2>&1) &
+        su - $user -c "scripts/stop_vm.sh $vm_name" > /dev/null 2>&1) &
     fi
 
     
