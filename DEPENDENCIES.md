@@ -7,3 +7,6 @@ litellm: 1.82.0
 python3-tk: 3.10.8
 python-is-python3: 3.9.2
 tshark: 3.6.2
+paramiko: 5.0.0
+pywinrm: 0.5.0
+nmap: 7.99

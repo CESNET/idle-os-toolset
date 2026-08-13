@@ -7,8 +7,9 @@ NC='\e[0m'
 
 user="vmuser"
 traffic_path="traffic"
-info_path="vm_info"  
+info_path="vm_info"
 capture_time=0
+wait_between=5
 minutes=true
 seconds=false
 hours=false
@@ -17,8 +18,9 @@ date_format="%F"
 
 # get the parameters
 usage() {
-    echo "Usage: $0 vm_name [-t capture_time | --time capture_time] [-g | --graphic] [-h | --help] [-m | --minutes] [-s | --seconds] [-H | --hours] [-d | --days]"
-    echo "For starting multiple VMs at once separate names with comma. E.g. vm1,vm2,vm3. Do not use spaces. If you want to start all existing VMs, use all as the name."      
+    echo "Usage: $0 <vm_name|all|N-M> [-t capture_time | --time capture_time] [-w | --wait seconds] [-g | --graphic] [-h | --help] [-m | --minutes] [-s | --seconds] [-H | --hours] [-d | --days]"
+    echo "For starting multiple VMs at once separate names with comma. E.g. vm1,vm2,vm3. Do not use spaces. If you want to start all existing VMs, use all as the name."
+    echo "N-M           Start VMs from position N to M in the full list (1-based)"
     echo "If time to capture traffic is not given, traffic will be captured until the virtual machine is stopped."
     echo "If time to capture traffic is given, virtual machine will be running and traffic will be captured for the given time."
     echo "-t, --time: Time to capture traffic in minutes"
@@ -26,6 +28,7 @@ usage() {
     echo "-s, --seconds: Given time is in seconds"
     echo "-H, --hours: Given time is in hours"
     echo "-d, --days: Given time is in days"
+    echo "-w, --wait: Seconds to wait between starting each VM (default: 5)"
     echo "-h, --help: Show help"
     exit 1
 }
@@ -34,16 +37,30 @@ vm_names=$1
 if [ -z "$vm_names" ]; then
     echo -e "${RED}Error: Missing required parameter${NC}"
     usage
-elif [ "$vm_names" = "all" ]; then
-    vm_names=$(su - $user -c "vboxmanage list vms" | awk -F'"' '{print $2}' | tr '\n' ',')
 fi
 shift
 
-# set seprator to comma 
-IFS=','
+# Get full VM list (always needed for range and all)
+all_vms=$(su - $user -c "vboxmanage list vms" | awk -F'"' '{print $2}')
 
-# Split the string into an array    
-read -r -a vm_array <<< "$vm_names"
+if [ "$vm_names" = "all" ]; then
+    mapfile -t vm_array <<< "$all_vms"
+elif [[ "$vm_names" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+    range_start=${BASH_REMATCH[1]}
+    range_end=${BASH_REMATCH[2]}
+    if [[ "$range_start" -lt 1 || "$range_end" -lt "$range_start" ]]; then
+        echo -e "${RED}Error: Invalid range ${vm_names}. Start must be >= 1 and <= end.${NC}"
+        exit 1
+    fi
+    mapfile -t all_vms_array <<< "$all_vms"
+    vm_array=("${all_vms_array[@]:$((range_start - 1)):$((range_end - range_start + 1))}")
+    if [ "${#vm_array[@]}" -eq 0 ]; then
+        echo -e "${RED}Error: Range ${vm_names} is out of bounds (total VMs: ${#all_vms_array[@]}).${NC}"
+        exit 1
+    fi
+else
+    IFS=',' read -r -a vm_array <<< "$vm_names"
+fi
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -83,6 +100,10 @@ while [[ "$#" -gt 0 ]]; do
             days=true
             shift
             ;;
+        -w|--wait)
+            wait_between="$2"
+            shift 2
+            ;;
         -g|--graphic)
             graphic=true
             shift
@@ -101,18 +122,23 @@ if ! [[ "$capture_time" =~ ^[0-9]+$ ]]; then
     usage
 fi
 
+if ! [[ "$wait_between" =~ ^[0-9]+$ ]]; then
+    echo -e "${RED}Error: wait_between must be a number.${NC}"
+    usage
+fi
+
 
 
 
 for vm_name in "${vm_array[@]}"; do   
     echo "-----------------------------------------------------------------"
     # Check if the virtual machine exists
-    if ! su - $user -c "vboxmanage list vms | grep -q '$vm_name'"; then
+    if ! su - $user -c "vboxmanage list vms | grep -q '\"$vm_name\"'"; then
         echo -e "${RED}Error: Virtual machine $vm_name does not exist.${NC}"
         continue
     fi
 
-    if  su - $user -c "vboxmanage list runningvms | grep -q '$vm_name'"; then
+    if  su - $user -c "vboxmanage list runningvms | grep -q '\"$vm_name\"'"; then
         echo -e "${RED}Error: Virtual machine $vm_name is already running.${NC}"
         continue
     fi
@@ -278,7 +304,10 @@ EOF
         su - $user -c "scripts/stop_vm.sh $vm_name" > /dev/null 2>&1) &
     fi
 
-    
+    if [ "$wait_between" -gt 0 ]; then
+        echo "Waiting $wait_between seconds before starting next VM..."
+        sleep "$wait_between"
+    fi
 done
 
 echo "-----------------------------------------------------------------"

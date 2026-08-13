@@ -18,7 +18,7 @@ if [ -z "$vm_names" ]; then
     echo "Error: Missing required parameter"
     usage
 elif [ "$vm_names" = "all" ]; then
-    vm_names=$(su - $user -c "vboxmanage list runningvms" | awk -F'"' '{print $2}' | tr '\n' ',')
+    vm_names=$(su - $user -c "vboxmanage list runningvms" | awk -F'"' '{print $2}' | paste -sd, -)
 fi
 shift
 
@@ -35,13 +35,13 @@ for vm_name in "${vm_array[@]}"; do
     echo "Stopping the virtual machine $vm_name ..."
 
     # Check if the virtual machine exists
-    if ! su - $user -c "vboxmanage list vms | grep -q '$vm_name'"; then
+    if ! su - $user -c "vboxmanage list vms | grep -q '\"$vm_name\"'"; then
         echo "Error: Required virtual machine does not exist."
         continue
     fi
 
     # Check if the virtual machine is running
-    if ! su - $user -c "vboxmanage list runningvms" | grep -q "$vm_name"; then
+    if ! su - $user -c "vboxmanage list runningvms" | grep -q "\"$vm_name\""; then
         echo "Virtual machine is not running."
         continue
     fi
@@ -56,6 +56,16 @@ for vm_name in "${vm_array[@]}"; do
         echo "Error: Path to traffic not found."
         continue
     fi
+    # Remove malformed/truncated packets from the pcap
+    tmp_pcap="$(dirname "$path_to_traffic")/.clean_tmp.pcap"
+    if tshark -r "$path_to_traffic" -Y "not _ws.short and not _ws.malformed and not _ws.unreassembled" -w "$tmp_pcap" 2>/dev/null; then
+        mv "$tmp_pcap" "$path_to_traffic"
+        echo "Malformed packets removed from pcap."
+    else
+        rm -f "$tmp_pcap"
+        echo "Warning: Could not clean malformed packets from pcap."
+    fi
+
     capture_info_file="$(dirname $path_to_traffic)/info.json"
     end_time=$(date -u "+%Y-%m-%dT%H:%M:%S%z")
 

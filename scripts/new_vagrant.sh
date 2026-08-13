@@ -173,17 +173,24 @@ else
 fi
 
 # wait for the virtual machine to boot
-echo "Waiting for machine to boot (60 seconds), then will get info about OS, MAC and IP addresses ..."
-sleep 30
+echo "Waiting for machine to boot, then will get info about OS, MAC and IP addresses ..."
+boot_timeout=90
+boot_interval=10
+boot_waited=0
+ipv4=$(su - $vmuser -c "VBoxManage guestproperty get '$VB_NAME' /VirtualBox/GuestInfo/Net/0/V4/IP")
+while [ "$ipv4" = "No value set!" ] && [ "$boot_waited" -lt "$boot_timeout" ]; do
+  sleep "$boot_interval"
+  boot_waited=$((boot_waited + boot_interval))
+  ipv4=$(su - $vmuser -c "VBoxManage guestproperty get '$VB_NAME' /VirtualBox/GuestInfo/Net/0/V4/IP")
+done
 
 guest_os=$(su - $vmuser -c "VBoxManage showvminfo '$VB_NAME'" | grep "Guest OS" | awk -F': ' '{print $2}' | sed 's/^[ \t]*//;s/[ \t]*$//')
 mac=$(su - $vmuser -c "VBoxManage guestproperty get '$VB_NAME' /VirtualBox/GuestInfo/Net/0/MAC")
 if [ "$mac" = "No value set!" ]; then
   mac="unknown"
-else 
+else
   mac=$(echo $mac | awk -F'[ ]+' '{print $2}' | sed -E 's/(..)(..)(..)(..)(..)(..)/\1:\2:\3:\4:\5:\6/')
 fi
-ipv4=$(su - $vmuser -c "VBoxManage guestproperty get '$VB_NAME' /VirtualBox/GuestInfo/Net/0/V4/IP")
 if [ "$ipv4" = "No value set!" ]; then
   ipv4="unknown"
 else

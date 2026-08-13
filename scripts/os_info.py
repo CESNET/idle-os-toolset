@@ -51,15 +51,23 @@ def check_user():
         sys.exit(1)
 
 
-def run_gui():
-    """Launch GUI mode."""
+def run_gui(explicit=False):
+    """Launch GUI mode.
+
+    If explicit is True (user passed --gui), any failure is reported and the
+    script exits instead of falling back. Otherwise (default invocation with
+    no options) a failure falls back to CLI mode.
+    """
     # Try to load tkinter
     try:
         import tkinter as tk
         from tkinter import ttk, messagebox
     except ImportError:
         print("Error: tkinter is not installed. Install it with: apt install python3-tk")
-        sys.exit(1)
+        if explicit:
+            sys.exit(1)
+        run_cli()
+        return
 
     # If there is no DISPLAY/WAYLAND_DISPLAY, try to configure a reasonable default
     if os.name == "posix" and not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
@@ -72,11 +80,11 @@ def run_gui():
         app = OSInfoGUI()
         app.mainloop()
     except tk.TclError as exc:
-        # Do not automatically fall back to CLI because the user
-        # prefers failure when there is no real graphical environment.
         print(f"Error launching GUI: {exc}")
-        run_cli()  # Fallback to CLI mode if GUI fails to launch
-        sys.exit(1)
+        if explicit:
+            sys.exit(1)
+        print("Falling back to CLI mode...")
+        run_cli()
 
 
 def run_cli():
@@ -108,13 +116,13 @@ Examples:
     # Check user
     check_user()
     
-    # Determine mode (default to GUI)
-    mode = 'cli' if args.cli else 'gui'
-    
-    if mode == 'gui':
-        run_gui()
-    else:
+    # Determine mode: explicit --cli/--gui, or default to GUI with CLI fallback
+    if args.cli:
         run_cli()
+    elif args.gui:
+        run_gui(explicit=True)
+    else:
+        run_gui(explicit=False)
 
 
 if __name__ == "__main__":

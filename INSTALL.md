@@ -10,7 +10,7 @@ export TOOLSET_ROOT=/data/virtual_machines   # change this if you use a differen
 ```
 
 #### 1. Create new user
-Create the `vmuser` user (without a password). The home directory of `vmuser` must be the directory where you want to store everything related to this project (toolkit files, virtual machines, traffic captures, etc.). This directory must match the value you chose for `TOOLSET_ROOT`. To allow switching to `vmuser` without a password using `su`, modify PAM so that `vmuser` is exempt from authentication. 
+Create the `vmuser` user (without a password). The home directory of `vmuser` must be the directory where you want to store everything related to this project (toolkit files, virtual machines, traffic captures, etc.). This directory must match the value you chose for `TOOLSET_ROOT`. To allow switching to `vmuser` without a password using `su`, modify PAM so that `vmuser` is exempt from authentication.
 
 Ubuntu and Oracle Linux:
 ```bash
@@ -30,10 +30,10 @@ source ${TOOLSET_ROOT}/venv/bin/activate
 #### 3. Add activating of `venv` after switching user to `vmuser`
 Ubuntu and Oracle Linux:
 ```bash
-# swith to vmuser
+# switch to vmuser
 su - vmuser
 ```
-Append this to the end of ~/.bashrc (create if doesn't exist)
+Append this to the end of ~/.bashrc (create it if it doesn't exist)
 ```bash
 VENV="$HOME/venv"
 
@@ -42,21 +42,21 @@ if [ -f "$VENV/bin/activate" ]; then
 fi
 ```
 
-Check if ~/.bash_profile exists, if not create this file and append
+Check if ~/.bash_profile exists; if not, create this file and append
 ```bash
 if [ -f ~/.bashrc ]; then
     . ~/.bashrc
 fi
 ```
 
-Virtual environment should be activated everytime after switching to `vmuser` now.
+The virtual environment should now be activated automatically every time you switch to `vmuser`.
 
 
-#### 4. Install VirtualBox, Extension Pack, Vagrant and jq
+#### 4. Install VirtualBox, Extension Pack, Vagrant and utilities
 
 Ubuntu:
 ```bash
-apt install jq
+apt install jq unzip p7zip-full arp-scan
 
 wget "https://download.virtualbox.org/virtualbox/7.2.6/virtualbox-7.2_7.2.6-172322~Ubuntu~jammy_amd64.deb"
 apt install ./virtualbox-7.2_7.2.6-172322~Ubuntu~jammy_amd64.deb
@@ -88,18 +88,19 @@ sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashi
 sudo yum -y install vagrant
 ```
 
-#### 2. Install Python dependencies
+#### 5. Install Python dependencies
 
 Install the Python packages required by the scripts:
 
 - `pyshark, pandas and tshark`: for processing network traffic captures and applying HTTP filters.
 - `litellm`: for sending requests to the LLM provider (for example, Groq) used to classify or enrich OS information.
-- `python3-tk`(`python3-tkinter`): to enable the graphical interface used by some scripts.
+- `python3-tk` (`python3-tkinter`): to enable the graphical interface used by some scripts.
 - `python-is-python3`: to have the `python` command point to Python 3.
+- `paramiko and pywinrm`: used to connect via SSH/WinRM to VMs created from images and retrieve their OS information.
 
 Ubuntu:
 ```bash
-pip install pyshark litellm pandas
+pip install pyshark litellm pandas paramiko pywinrm
 apt install -y python3-tk python-is-python3 tshark
 ```
 
@@ -111,7 +112,7 @@ dnf install -y python3-tkinter wireshark
 
 In the `get_os_info.py` file you will find a template for the requests that use the Groq model. You must insert your API key in the corresponding environment variable. If you use a different model or provider, update both the model configuration and the environment variable name to match your new provider.
 
-#### 3. Install NEMEA and ipfixprobe
+#### 6. Install NEMEA and ipfixprobe
 
 The toolkit can integrate with `ipfixprobe` and NEMEA to process IPFIX/flow records. Install the required build dependencies and compile the tools as follows:
 
@@ -187,7 +188,29 @@ cd ..
 
 After this step, `ipfixprobe` and the NEMEA components will be available system-wide and can be used together with the scripts to process captured traffic.
 
-#### 6. Create data directories and set permissions
+
+#### 7. Install latest Nmap version
+
+Nmap uses a fingerprint database to detect a host's operating system. Newer versions have more up-to-date fingerprints, so it's necessary to build from source to get the latest release instead of the outdated one in the distro repositories:
+
+Ubuntu:
+```bash
+wget https://nmap.org/dist/nmap-7.99.tar.bz2 -O nmap-7.99.tar.bz2
+bzip2 -cd nmap-7.99.tar.bz2 | tar xvf -
+cd nmap-7.99
+./configure
+make
+su root
+make install
+```
+
+Nmap is run against the VMs over a VirtualBox host-only network, so the `vboxnet0` interface must exist before scanning. Create it as `vmuser`:
+
+```bash
+su - vmuser -c "VBoxManage hostonlyif create"
+```
+
+#### 8. Create data directories and set permissions
 
 Create the data directory structure where all files related to these scripts will be stored, and give `vmuser` read and write permissions:
 
@@ -197,15 +220,18 @@ mkdir -p "$TOOLSET_ROOT"/vagrant/
 mkdir -p "$TOOLSET_ROOT"/traffic/
 mkdir -p "$TOOLSET_ROOT"/vm_info/
 mkdir -p "$TOOLSET_ROOT"/os_info/
+mkdir -p "$TOOLSET_ROOT"/vm_images/
+mkdir -p "$TOOLSET_ROOT"/nmap/
+
 
 chown -R vmuser:vmuser "$TOOLSET_ROOT"/
 
 usermod -aG virtualbox vmuser
 ```
 
-After this step, `vmuser` will own the entire project root directory (for example, `/mnt/ntfms`) and will belong to the `virtualbox` group, which allows it to manage VirtualBox virtual machines properly.
+After this step, `vmuser` will own the entire project root directory and will belong to the `virtualbox` group, which allows it to manage VirtualBox virtual machines properly.
 
-#### 7. Install Android communication tools
+#### 9. Install Android communication tools
 
 To communicate with Android virtual machines and devices, install the following:
 
@@ -223,7 +249,7 @@ dnf install -y android-tools
 su - vmuser -c "vagrant plugin install vagrant-dummy-communicator"
 ```
 
-#### 8. Make shell scripts executable
+#### 10. Make shell scripts executable
 
 Finally, give execution permissions to all shell scripts in the `scripts` directory:
 
@@ -234,6 +260,18 @@ chmod +x "$TOOLSET_ROOT"/scripts/*.sh
 
 At this point, the environment should be ready to use the toolkit scripts in both CLI and GUI modes.
 
-#### 9. Add GROQ API key 
-Add GROQ API key to `.env.example` and rename to `.env`.
+#### 11. Add GROQ API key
+Add your GROQ API key to `.env.example`, then rename it to `.env`.
+
+#### 12. Install all virtual machines
+Once the environment is set up, you can install all the virtual machines listed in `vm_list.csv` at once by running `create_vms.sh`:
+
+```bash
+cd "$TOOLSET_ROOT"/scripts
+./create_vms.sh
+```
+
+This reads each entry in `vm_list.csv` and creates the corresponding VM.
+
+> **Note:** `create_vms.sh` also triggers automatic OS fingerprinting via `gpt-oss-120b` and `gpt-oss-20b` model on GROQ. Depending on how many machines are listed in `vm_list.csv`, the free token quota may or may not be enough to fingerprint all of them in a single run; if both models' quotas end up exhausted, the remaining requests will start failing. If this happens, stop the loop at that point and wait for the token quota to reset before resuming fingerprinting for the rest of the machines. 
 

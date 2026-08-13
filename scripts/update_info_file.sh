@@ -7,12 +7,12 @@ traffic_folder="traffic"
 
 # get the parameters
 usage() {
-    echo "Usage: $0 vm_name [-s source | --source source] [-l link | --link link] [-H hash | --hash hash] [-f os_family | --os_family os_family] [-t os_type | --os_type os_type] [-v os_version | --os_version os_version] [-i IPv4 | --IPv4 IPv4] [-m MAC | --MAC MAC] [-h | --help]"
+    echo "Usage: $0 vm_name [-s source | --source source] [-l link | --link link] [-H hash | --hash hash] [-V vagrant_box | --vagrant_box vagrant_box] [-f os_family | --os_family os_family] [-t os_type | --os_type os_type] [-v os_version | --os_version os_version] [-i IPv4 | --IPv4 IPv4] [-m MAC | --MAC MAC] [-h | --help]"
     echo "-s, --source: Source of the image (vagrant/osboxes.org/linuxvmimages.com)"
     echo "-l, --link: Link from where the image was downloaded"
     echo "-H, --hash: Hash of the image (in format sha256:hash/md5:hash/etc.)"
     echo "-V, --vagrant_box: Name of the vagrant box"
-    echo "-f, --os_family: Family of the operating system (windows/linux/andorid/macos)"
+    echo "-f, --os_family: Family of the operating system (windows/linux/android/macos)"
     echo "-t, --os_type: Type of the operating system (e.g. debian, ubuntu, centos, fedora, etc.)"
     echo "-v, --os_version: Version of the operating system"
     echo "-i, --IPv4: IPv4 address of the virtual machine"
@@ -84,27 +84,24 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         -f|--os_family)
             if [ -z "$2" ]; then
-                echo "Error: Missing required parameter"
-                usage
+                echo "Error: there was an error obtaining the fingerprint (os_family is empty). The field will be left blank."
             fi
             os_family="$2"
-            shift 2
+            shift 2 2>/dev/null || shift
             ;;
         -t|--os_type)
             if [ -z "$2" ]; then
-                echo "Error: Missing required parameter"
-                usage
+                echo "Error: there was an error obtaining the fingerprint (os_type is empty). The field will be left blank."
             fi
             os_type="$2"
-            shift 2
+            shift 2 2>/dev/null || shift
             ;;
         -v|--os_version)
             if [ -z "$2" ]; then
-                echo "Error: Missing required parameter"
-                usage
+                echo "Error: there was an error obtaining the fingerprint (os_version is empty). The field will be left blank."
             fi
             os_version="$2"
-            shift 2
+            shift 2 2>/dev/null || shift
             ;;
         -i|--IPv4)
             if [ -z "$2" ]; then

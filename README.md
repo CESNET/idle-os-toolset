@@ -4,10 +4,10 @@
 This is a set of tools used to create the [CESNET Idle OS traffic](https://zenodo.org/records/15004765) dataset.
 The dataset contains captured network traffic of various operating systems (OS) in their idle state, i.e. without any user activity.
 
-The toolset allows to create a set of virtual machines (VM) in VirtualBox, run them for a specified amount of time and capture the traffic they generate.
+The toolset allows you to create a set of virtual machines (VM) in VirtualBox, run them for a specified amount of time, and capture the traffic they generate.
 There are also scripts to process the data -- convert raw packet captures (PCAPs) to rich flow records using [ipfixprobe](https://cesnet.github.io/ipfixprobe/) and extract details of DNS, HTTP and TLS traffic.
 
-Instalation guide in [INSTALL.md](INSTALL.md).
+Installation guide in [INSTALL.md](INSTALL.md).
 
 Versions of the packages and tools are listed in [DEPENDENCIES.md](DEPENDENCIES.md).
 
@@ -20,7 +20,7 @@ For a list of available VMs, run the command `list_vms.sh`. To list only running
 
 ## Add or update information about a VM
 
-Before running any VM and capturing its network traffic, the info file must be configured. To configure this file, you can use the script `scripts/update_vm_info.sh`. Alternatively, you can configure this file manually. All files with information about VMs are stored in the folder `/data/virtual_machines/vm_info/`. In this folder, there is a JSON file for each VM; this file must have the same name as the VM in VirtualBox. The file must contain the following information:
+Before running any VM and capturing its network traffic, the info file must be configured. To configure this file, you can use the script `scripts/update_info_file.sh`. Alternatively, you can configure this file manually. All files with information about VMs are stored in the folder `/data/virtual_machines/vm_info/`. In this folder, there is a JSON file for each VM; this file must have the same name as the VM in VirtualBox. The file must contain the following information:
 
 ```json
 {
@@ -45,7 +45,7 @@ Fields `vm_name`, `source`, `os_family`, `os_type`, and `os_version` are require
 This script automatically adds the given information to the info file of a particular VM.
 
 ```bash
-./update_info_file.sh vm_name [-s source | --source source] [-l link | --link link] [-H hash | --hash hash] [-f os_family | --os_family os_family] [-t os_type | --os_type os_type] [-v os_version | --os_version os_version] [-i IPv4 | --IPv4 IPv4] [-m MAC | --MAC MAC] [-h | --help]
+./update_info_file.sh <vm_name> [-s source | --source source] [-l link | --link link] [-H hash | --hash hash] [-V vagrant_box | --vagrant_box vagrant_box] [-f os_family | --os_family os_family] [-t os_type | --os_type os_type] [-v os_version | --os_version os_version] [-i IPv4 | --IPv4 IPv4] [-m MAC | --MAC MAC] [-h | --help]
 ```
 
 | Short Option | Long Option        | Description                                           |
@@ -76,7 +76,7 @@ start_vm <vm_name> [-t capture_time | --time capture_time] [-g | --graphic] [-h 
 
 This script allows you to start multiple virtual machines with a single command. You can specify the names of the virtual machines separated by commas (without spaces) as the `<vm_name>` argument. If you want to start all available virtual machines, pass `all` as the `<vm_name>` argument.
 
-If the time to capture traffic is not given, traffic will be captured until the virtual machine is stopped. A script `stop_vm.sh` should be used to stop the capture because it also processes the captured data.  Otherwise, the captured data will not be processed correctly.
+If the time to capture traffic is not given, traffic will be captured until the virtual machine is stopped. The `stop_vm.sh` script should be used to stop the capture because it also processes the captured data. Otherwise, the captured data will not be processed correctly.
 If the time to capture traffic is given, the virtual machine will run and traffic will be captured for the given time.
         
 | Short Option | Long Option | Description |
@@ -89,9 +89,11 @@ If the time to capture traffic is given, the virtual machine will run and traffi
 | -H           | --hours     | Given time is in hours |
 | -d           | --days      | Given time is in days |
 
+You can also start VMs by position in the full VM list instead of by name, using an `N-M` range (1-based, e.g. `5-10`). This is handy for splitting a large fleet of VMs into smaller batches. Use `-w | --wait` to control the number of seconds to wait between starting each VM in the batch (default: 5 seconds), which helps avoid overloading the host when starting many VMs at once.
+
 ## Stop VM and capture
 
-If the power-off of the VM wasn't planned when starting the VM, this script should be used to stop the VM and end capturing network traffic. Captured traffic is then available in the `traffic.pcap` file in corresponding VM directory.
+If the VM wasn't scheduled to power off when it was started, this script should be used to stop the VM and end capturing network traffic. Captured traffic is then available in the `traffic.pcap` file in corresponding VM directory. Before the capture is finalized, the script also uses `tshark` to strip malformed, short, or unreassembled packets from the pcap.
 
 ### Usage of the `stop_vm.sh` script:
 
@@ -101,6 +103,128 @@ stop_vm.sh <vm_name>
 
 This script allows you to stop multiple virtual machines with a single command. You can specify the names of the virtual machines separated by commas (without spaces) as the `<vm_name>` argument. If you want to stop all running virtual machines, pass `all` as the `<vm_name>` argument.
 
+## Capture traffic in batches
+
+`capture_loop.sh` automates running `start_vm.sh` over several VM ranges, one batch at a time: it starts each range with a fixed capture time, waits until every VM in the batch has finished capturing and auto-stopped, and then moves on to the next range.
+
+### Usage
+
+```bash
+capture_loop.sh --ranges N-M[,N-M...] -t capture_time (-m|-s|-H|-d) [-w wait_seconds] [-g] [-h]
+```
+
+| Short Option | Long Option | Description |
+|--------------|-------------|-------------|
+| -h           | --help      | Show help   |
+| --ranges     | --ranges    | Comma-separated list of VM ranges to process, e.g. `1-20,21-40` |
+| -t           | --time      | Time to capture traffic before each VM auto-stops, passed to `start_vm.sh` |
+| -m           | --minutes   | Given time is in minutes (default) |
+| -s           | --seconds   | Given time is in seconds |
+| -H           | --hours     | Given time is in hours |
+| -d           | --days      | Given time is in days |
+| -w           | --wait      | Seconds to wait between starting each VM within a batch, passed to `start_vm.sh` |
+| -g           | --graphic   | Start VMs in graphic mode |
+
+## Start/stop a VM without capturing traffic
+
+`boot_vm.sh` and `shutdown_vm.sh` start and stop VMs the same way as `start_vm.sh`/`stop_vm.sh`, but without capturing traffic or pcap processing. They're mainly used to boot and shut down VMs for Nmap OS fingerprinting scans where no traffic capture is needed.
+
+### Usage
+
+```bash
+boot_vm.sh <vm_name|all|N-M> [-g | --graphic] [-h | --help]
+shutdown_vm.sh <vm_name|all>
+```
+
+Both scripts accept the same `vm_name` forms as `start_vm.sh`/`stop_vm.sh`: a single name, a comma-separated list, `all`, or (for `boot_vm.sh`) an `N-M` position range.
+
+## OS fingerprinting with Nmap
+
+`nmap.sh` enumerates all registered VirtualBox VMs and, via an `arp-scan`, matches each one to the IP address of whichever VMs are currently running and reachable on the network, then runs `nmap -O` against each matched VM to get an OS fingerprint. Results, together with the ground-truth OS info from the corresponding `vm_info/<vm_name>.json` file, are appended to a CSV file. This script evaluates how well Nmap's OS detection matches the real, known OS of each VM.
+
+### Usage
+
+```bash
+nmap.sh [--outdir <dir>] [--outfile <filename.csv>]
+```
+
+| Option    | Description                                  |
+|-----------|-----------------------------------------------|
+| --outdir  | Output directory for the CSV (default: `nmap/` directory) |
+| --outfile | Output CSV filename (default: `nmap_results_<timestamp>.csv`) |
+
+The output CSV contains: `vm_name, ip, mac, Os_Family, Os_Type, Os_Version, fingerprint_nmap`.
+
+`nmap_batch_scan.sh` automates running `nmap.sh` over batches of VMs: for each VM range it boots the VMs and runs `nmap.sh` once, then shuts the VMs down before moving to the next range.
+
+### Usage
+
+```bash
+nmap_batch_scan.sh --ranges N-M[,N-M...] [--wait SECONDS]
+```
+
+| Option    | Description                                                    |
+|-----------|------------------------------------------------------------------|
+| --ranges  | Comma-separated list of VM ranges to process (required) |
+| --wait    | Seconds to wait after starting VMs before scanning, to let them boot (default: 30) |
+
+## Check for duplicate VM MAC addresses
+
+Cloning or importing VM images can leave duplicate NIC 1 MAC addresses across VMs, breaking ARP-based IP matching in `nmap.sh` and potentially confusing the host-only network. `check_vm_macs.sh` detects these duplicate MACs across all registered VMs and can regenerate a random MAC for each one.
+
+### Usage
+
+```bash
+check_vm_macs.sh
+```
+
+## Resize a VM
+
+`resize_vm.sh` changes the number of CPUs and/or the RAM of one or more powered-off VMs.
+
+### Usage
+
+```bash
+resize_vm.sh <vm_name|all> [-c | --cpus <num_cpus>] [-r | --ram <ram_mb>] [-h | --help]
+```
+
+| Short Option | Long Option | Description |
+|--------------|-------------|-------------|
+| -c           | --cpus      | Set the number of CPUs |
+| -r           | --ram       | Set the RAM size in MB |
+| -h           | --help      | Show help |
+
+Multiple VMs can be specified separated by commas, or `all` to resize every existing VM. The VM must be powered off before resizing.
+
+## Set VM network mode
+
+`set_network.sh` switches NIC 1 of one or more powered-off VMs between host-only (`vboxnet0`, used for Nmap fingerprinting) and NAT (used for giving the VM internet access and for capturing its network traffic).
+
+### Usage
+
+```bash
+set_network.sh <vm_name|all> --hostonly | --nat
+```
+
+## VM configuration overview
+
+`get_vms_config.sh` lists all registered VMs with their number of CPUs, memory size, and NIC 1 attachment mode, plus totals across all VMs.
+
+### Usage
+
+```bash
+get_vms_config.sh
+```
+
+## Captured pcap statistics
+
+`get_pcaps_stats.sh` walks the `traffic` folder and, for each `.pcap` file found, uses `tshark` to compute its duration, packet count, size, and protocol hierarchy. Each capture is matched to its VM to also record OS family, type, and version, and all results are written to a CSV file.
+
+### Usage
+
+```bash
+get_pcaps_stats.sh [traffic_dir] [--outdir <dir>] [--outfile <filename.csv>]
+```
 
 ## Data processing
 
@@ -110,8 +234,8 @@ After raw data was captured for one or all VMs, the `process_data.sh` script can
 process_data.sh <vm_name> [<vm_name> ...]
 ```
 
-Specify one or more VMs whose data should be processed (`traffic.pcap` files in individual capture subdirectories). The script always processes all captures of given VM.
-To process data of all VMs, pass `all` the `<vm_name>` argument.
+Specify one or more VMs whose data should be processed (`traffic.pcap` files in individual capture subdirectories). The script always processes all captures of the given VM.
+To process data of all VMs, pass `all` as the `<vm_name>` argument.
 To list names of all defined VMs, pass `--list`.
 
 The script first computes flow data from each capture (`traffic.pcap` file) of given VM(s). The [ipfixprobe](https://ipfixprobe.cesnet.cz/) exporter with several plugins is used.
@@ -138,9 +262,9 @@ merged_tls.csv:
 ```
 
 
-## Generate VM Names for Vagrant Boxes
+## Generate VM Names for Vagrant Boxes or VM Images
 
-When you have a list of Vagrant boxes and need suggested VM names, `get_vm_names.py` can help. It reads Vagrant box names from `vagrant_list.txt` (one box per line) and uses an AI model to suggest VM names in the `<os_family>_<os_version>` format. The script then updates `vagrant_list.txt` with lines in the `vagrant_box;vm_name` format, ready to be used by `create_multiple_boxes.sh`.
+When you have a list of Vagrant boxes and/or a list of VM images, and need suggested VM names, `get_vm_names.py` can help. It uses an AI model to suggest VM names in the `<os_family>_<os_version>` format. It reads `vm_list.csv` and, based on each row's `type` column (`vagrant` or `image`), automatically builds the right prompt for that row — no mode flag needed.
 
 ### Usage
 
@@ -148,36 +272,48 @@ When you have a list of Vagrant boxes and need suggested VM names, `get_vm_names
 python3 get_vm_names.py
 ```
 
-The script reads from `vagrant_list.txt` in the current directory and overwrites it with lines in the following format:
+The script reads `vm_list.csv` from the current directory and overwrites it, keeping the header and every column, only filling in blank `vm_name` values. Rows with `type` set to `vagrant` are suggested a name based on the Vagrant box (e.g. `ubuntu/bionic64` → `ubuntu_bionic`); rows with `type` set to `image` are suggested a name based on the zip file name (e.g. `manjaro_21.0.zip` → `manjaro_21.0`).
 
-```
-vagrant_box_1;vm_name_1
-vagrant_box_2;vm_name_2
-```
+## Create Multiple VMs (Vagrant and Images)
 
-Example: `ubuntu/bionic64;ubuntu_bionic`
-
-## Create Multiple VMs from Vagrant
-
-To create multiple VMs at once from a list, use `create_multiple_boxes.sh`. It reads `vagrant_list.txt` from the current directory, where each line must follow the `vagrant_box;vm_name` format (as produced by `get_vm_names.py`), and calls `new_vagrant.sh` for each entry.
+To create multiple VMs at once from a list, use `create_vms.sh`. It reads `vm_list.csv` from the current directory and, for each row, calls `new_vagrant.sh` (if `type` is `vagrant`) or `new_image_vm.sh` (if `type` is `image`).
 
 ### Usage
 
 ```bash
-./create_multiple_boxes.sh
+./create_vms.sh [-n | --dry-run] [-h | --help]
 ```
 
-The `vagrant_list.txt` file must exist in the current directory. Each non-empty line should follow the format:
+Use `-n`/`--dry-run` to validate `vm_list.csv` without creating any VM: it checks that the LLM provider used by `get_vm_names.py`/`get_os_info.py` (Groq, via `litellm`) is reachable with the configured `GROQ_API_KEY`, and that every `vagrant` row's box actually exists on [Vagrant Cloud](https://app.vagrantup.com). `image` rows aren't checked further in dry-run mode.
+
+The `vm_list.csv` file must exist in the current directory, with a header row followed by one row per VM in the following format:
 
 ```
-vagrant_box;vm_name
+type,name,vm_name,hash,user,password,source,link
 ```
 
-Example: `ubuntu/focal64;ubuntu_focal`
+| Column   | Description |
+|----------|-------------|
+| type     | `vagrant` or `image` |
+| name     | For `vagrant`: the Vagrant box name (e.g. `ubuntu/focal64`). For `image`: name of the `.zip`/`.7z` file inside `vm_images/` |
+| vm_name  | Name to give the virtual machine in VirtualBox (`<os>_<version>` format), can be left empty and filled in by `get_vm_names.py` |
+| hash     | Hash of the zip file (format `algo:hash`, e.g. `sha256:...`). Not needed for `vagrant` rows |
+| user     | Username for remote access (SSH/WinRM) inside the guest. Not needed for `vagrant` rows or Android images |
+| password | Password for remote access (SSH/WinRM) inside the guest. Not needed for `vagrant` rows or Android images |
+| source   | Source of the image (e.g. `osboxes.org`, `linuxvmimages.com`). Not needed for `vagrant` rows |
+| link     | Link from where the image was downloaded. Not needed for `vagrant` rows |
+
+For `vagrant` rows, `hash`, `user`, `password`, `source` and `link` can be left empty.
+
+Example rows:
+```
+vagrant,ubuntu/focal64,ubuntu_focal,,,,,
+image,manjaro_21.0.zip,manjaro_21.0,md5:daabd6555ad6c4776f6aa5f59dff05ea,manjaro,manjaro,linuxvmimages.com,https://www.linuxvmimages.com/images/manjaro-21/
+```
 
 ## Add a New VM via Vagrant
 
-A new virtual machine can be added manually via the VirtualBox manager or via Vagrant. To add a new VM via Vagrant, the script `new_vagrant` can be used. This script will create a folder and `Vagrantfile` with configuration for the VM, and then the VM will be created. The script also creates a folder for storing files containing captured network traffic and a file with information about the VM, such as the used VagrantBox, IP address, MAC address, and OS. The script uses get_os_info.py to retrieve OS information and update_info_file.sh to include this information in the file.
+ To add a new VM via Vagrant, the script `new_vagrant` can be used. This script will create a folder and `Vagrantfile` with configuration for the VM, and then the VM will be created. The script also creates a folder for storing files containing captured network traffic and a file with information about the VM, such as the used VagrantBox, IP address, MAC address, and OS. The script uses get_os_info.py to retrieve OS information and update_info_file.sh to include this information in the file.
 
 ### Usage:
 
@@ -188,6 +324,28 @@ new_vagrant [-v vagrant_name|--vagrant <vagrant_name>] [-b vbox_name|--virtualbo
 Name the virtual machine in VirtualBox in the following format: `<os>_<version>`.
 
 Example: `new_vagrant -v ubuntu/bionic64 -b ubuntu_bionic`
+
+## Add a New VM from an Image (non-Vagrant)
+
+For OS images that aren't distributed as Vagrant boxes (e.g. downloaded OVA/VBOX/VDI files from sites like osboxes.org or linuxvmimages.com), use `new_image_vm.sh` instead. It extracts a `.zip`/`.7z` file from the `vm_images/` folder, imports/registers it in VirtualBox, verifies the given hash, sets up NAT networking and remote-access port forwarding, then boots the VM. It then calls `get_os_info_images.py`, which connects to the guest to retrieve OS information, and `update_info_file.sh` to fill in the VM's OS information, before powering it off.
+
+### Usage
+
+```bash
+new_image_vm.sh -z zip_name|--zip zip_name -b vbox_name|--virtualbox vbox_name -u user|--user user -p password|--password password -H hash|--hash hash -s source|--source source -l link|--link link
+```
+
+| Short Option | Long Option    | Description |
+|--------------|----------------|-------------|
+| -z           | --zip          | Name of the `.zip`/`.7z` file inside `vm_images/` (must contain an `.ova`, a `.vbox` VM folder, or a loose `.vdi`) |
+| -b           | --virtualbox   | Name to give the virtual machine in VirtualBox |
+| -u           | --user         | Username for remote access (SSH/WinRM) inside the guest (not needed for Android) |
+| -p           | --password     | Password for remote access (SSH/WinRM) inside the guest (not needed for Android) |
+| -H           | --hash         | Hash of the zip file (format `algo:hash`, e.g. `sha256:...`) |
+| -s           | --source       | Source of the image (e.g. `osboxes.org`, `linuxvmimages.com`) |
+| -l           | --link         | Link from where the image was downloaded |
+
+All parameters are required except `-u`/`--user` and `-p`/`--password`, which aren't needed when the VM name contains `android`.
 
 ## Remove a VM
 
@@ -288,5 +446,11 @@ python3 os_info.py -h           # Show help
 |---------|--------------------------------|
 | --gui   | Launch GUI mode (default)      |
 | --cli   | Launch CLI mode (terminal)     |
+
+## Funding
+
+[FUNDING_CESNET]
+
+This work was supported by project PID2025-175049OB-I00, funded by MICIU/AEI/10.13039/501100011033 and by ERDF/EU, and by the grant ED431C 2026/56 - Competitive Reference Groups GRC - funded by Xunta de Galicia (Spain). This work was also supported by CITIC, as a center accredited for excellence within the Galician University System and a member of the CIGUS Network, which receives subsidies from the Department of Education, Science, Universities, and Vocational Training of the Xunta de Galicia. Additionally, CITIC is co-financed by the EU through the FEDER Galicia 2021–27 operational program (Ref. ED431G 2023/01). This work was also supported by the “Formación de Profesorado Universitario” (FPU) grant from the Spanish Ministry of Universities to Rubén Pérez-Jove (Grant FPU22/04418).
 
 
