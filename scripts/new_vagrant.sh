@@ -199,7 +199,7 @@ fi
 
 echo $guest_os
 echo $mac
-su - $vmuser -c "cat > ${PATH_INFO}${VB_NAME}.json <<EOF
+su - $vmuser -c "cat > ~/${PATH_INFO}${VB_NAME}.json <<EOF
 {
   \"vm_name\": \"$VB_NAME\",
   \"source\": \"vagrant\",
@@ -218,36 +218,6 @@ EOF
 su - $vmuser -c "cd $PATH_VAGRANT && python ~/${PATH_SCRIPTS}get_os_info.py -v $VAGRANT_NAME -b $VB_NAME"
 
 echo -e "${GREEN}Virtual machine created successfully.${NC}"
-#echo -e "${YELLOW}Please fill in the missing information in the ${PATH_INFO}${VB_NAME}.json file. Either manually or by running the script ${PATH_SCRIPTS}update_info_file.sh.${NC}"
-
-OS_INFO_FILE="${PATH_OS_INFO}${VB_NAME}/os_info.json"
-
-json_content=$(su - $vmuser -c "cat $OS_INFO_FILE")
-
-if [ -z "$json_content" ]; then
-  su - $vmuser -c "mkdir -p ${PATH_OS_INFO}${VB_NAME}/"
-  su - $vmuser -c "touch ${OS_INFO_FILE}"
-fi
-
-OS_FAMILY=$(echo "$json_content" | jq -r '.Os_Family // empty' | tr ' ' '_' )
-OS_TYPE=$(echo "$json_content" | jq -r '.Os_Type // empty' | tr ' ' '_' )
-OS_VERSION=$(echo "$json_content" | jq -r '.Os_Version // empty' | tr ' ' '_' )
-echo $VB_NAME
-echo $OS_FAMILY
-echo $OS_TYPE
-echo $OS_VERSION
-
-su - $vmuser -c "./${PATH_SCRIPTS}update_info_file.sh $VB_NAME -f '$OS_FAMILY' -t '$OS_TYPE' -v '$OS_VERSION'"
-
-
-# if [ ! -z "$json_content" ]; then
-#   OS_FAMILY=$(echo "$json_content" | jq -r '.Os_Family // empty' | tr ' ' '_' )
-#   OS_TYPE=$(echo "$json_content" | jq -r '.Os_Type // empty' | tr ' ' '_' )
-#   OS_VERSION=$(echo "$json_content" | jq -r '.Os_Version // empty' | tr ' ' '_' )
-#   su - $vmuser -c "./${PATH_SCRIPTS}update_info_file.sh $VB_NAME -f '$OS_FAMILY' -t '$OS_TYPE' -v '$OS_VERSION'"
-# else
-#   echo -e "${RED}Error: OS info file not created or is empty. Cannot update vm info.${NC}"
-# fi
 
 # vm poweroff
 su - $vmuser -c "vboxmanage controlvm '$VB_NAME' poweroff"
