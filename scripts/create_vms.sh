@@ -48,7 +48,7 @@ import sys
 
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path=os.path.join(os.getcwd(), ".env"))
+load_dotenv(dotenv_path=os.path.join(os.getcwd(), "../.env"))
 
 if not os.getenv("GROQ_API_KEY"):
     print("  FAIL: GROQ_API_KEY is not set (checked environment and .env).")
