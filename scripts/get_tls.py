@@ -7,6 +7,7 @@ import json
 import pandas as pd
 import getpass
 import shlex
+import glob
 
 HOME = os.path.expanduser("~")
 INFO_PATH = os.path.join(HOME, 'vm_info')
@@ -37,13 +38,9 @@ parser.add_argument('-f', '--flow-files', nargs="*",
 args = parser.parse_args()
 
 
-def find_files(filename, search_path): # FIXME: use GLOB "????-??-??__*__*/traffic.pcap", so it's the same as in process_data.sh
-    result = []
-    for root, dirs, files in os.walk(search_path):
-        if filename in files:
-            result.append(os.path.join(root, filename))
-    #print(f'Files: {result}')
-    return result
+def find_files(filename, search_path):
+    pattern = os.path.join(search_path, "????-??-??__*__*", filename)
+    return glob.glob(pattern)
 
 # find info file
 info_file_path = os.path.join(INFO_PATH, args.name + '.json')
