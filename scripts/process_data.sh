@@ -75,8 +75,8 @@ for vm_name in $vm_names; do
     echo "Processing captured traffic of the virtual machine $vm_name ..."
 
     traffic_dir="$(jq -r .traffic_folder "$info_path/$vm_name.json")"
-    traffic_dir="${home_dir}/${traffic_dir}"
     if [[ "$traffic_dir" == "" ]]; then echo "ERROR: Can't find info for $vm_name"; continue; fi
+    traffic_dir="${home_dir}/${traffic_dir}"
 
     # Loop over all runs/traffic captures (stored in directories named "YYYY-MM-DD__imagesource__imagename")
     capture_dirs="$(find "$traffic_dir" -type d -name '????-??-??__*__*')"

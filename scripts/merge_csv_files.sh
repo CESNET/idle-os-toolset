@@ -1,7 +1,9 @@
 #!/usr/bin/bash
 # Merge files with extracted L7 requests (dns.csv, http.csv, tls.csv) from individual OSes into a single file.
 
-TRAFFIC_PATH='traffic'
+user="vmuser"
+home_path=$(su - $user -c "pwd")
+TRAFFIC_PATH="${home_path}/traffic"
 output_dir="$TRAFFIC_PATH"
 
 # Re‑execute this script as user "vmuser" using su -c, preserving
@@ -17,7 +19,7 @@ usage() {
     echo "Usage:"
     echo "  $0 [-o output_dir|--output output_dir]"
     echo ""
-    echo "The following files are search for and merged:"
+    echo "The following files are searched for and merged:"
     echo "  dns.csv"
     echo "  http.csv"
     echo "  tls.csv"

@@ -53,7 +53,7 @@ info = json.load(open(info_file_path))
 os_family = info['os_family']
 os_type = info['os_type']
 os_version = info['os_version']
-traffic_folder = info['traffic_folder']
+traffic_folder = os.path.join(HOME, info['traffic_folder'])
 
 # find flow files
 if args.flow_files:
@@ -75,8 +75,9 @@ except Exception as e:
     sys.exit(1)
 
 # Extract the TLS data
-all_data = pd.DataFrame()
-columns = ['uint16 TLS_VERSION', 'string TLS_ALPN', 'bytes TLS_JA3', 'string TLS_SNI']
+columns = ['uint16 TLS_VERSION', 'string TLS_ALPN', 'bytes TLS_JA3', 'string TLS_JA4', 'string TLS_SNI']
+all_data = pd.DataFrame(columns=columns)
+all_data.rename(lambda x: x.split()[1], axis='columns', inplace=True)
 
 for flow_file in flow_files:
     print(f"processing {flow_file} ...")

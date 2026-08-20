@@ -1,9 +1,10 @@
 #!/usr/bin/bash
 
 user="vmuser"
-vagrant_path="vagrant"
-os_info_path="os_info"
-vm_info_path="vm_info"
+home_path=$(su - $user -c "pwd")
+vagrant_path="${home_path}/vagrant"
+os_info_path="${home_path}/os_info"
+vm_info_path="${home_path}/vm_info"
 
 # get the parameters
 usage() {
@@ -78,7 +79,7 @@ if [ "$answer" != "yes" ]; then
 fi
 
 # remove the virtual machine
-su - $user -c "vboxmanage unregistervm $vm_name --delete"
+su - $user -c "vboxmanage unregistervm '$vm_name' --delete"
 
 # remove vagrant folder if it exists
 vagrant_path="${vagrant_path}/${vm_name}"

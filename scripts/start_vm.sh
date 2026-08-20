@@ -174,7 +174,7 @@ for vm_name in "${vm_array[@]}"; do
             echo -e "${YELLOW}The info file is located at $info_path_vm. You can fill in the missing information manually or use script /data/virtual_machines/scripts/update_info_file.sh.${NC}"
             continue
         fi
-        traffic_folder="${home}/${traffic_path}/${family}__${type}__${version}"
+        traffic_folder="${traffic_path}/${family}__${type}__${version}"
     fi
 
     # create folder path for this capture
@@ -201,7 +201,7 @@ for vm_name in "${vm_array[@]}"; do
         fi
     fi
     traffic_folder="${traffic_folder}/${date_name}__${source}__${id}"
-
+    echo $traffic_folder
     # create info file for this capture
     counter=1 # if folder exists, add counter to the folder name
     folder_name=$traffic_folder
