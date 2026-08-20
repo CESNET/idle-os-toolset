@@ -16,6 +16,8 @@ load_dotenv()
 home = os.path.expanduser("~")
 os_info_path = home + "/os_info/"
 vm_list_path = home + "/vm_list.md"
+vagrant_path = home + "/vagrant/"
+vm_info_path = home + "/vm_info/"
 
 
 async def generate_commands(vagrant_box, vm_name):
@@ -157,6 +159,26 @@ async def get_os_info(vagrant_box, vm_name):
         except json.JSONDecodeError:
             f.write(response.choices[0].message.content)
 
+    # Edit vm_info file
+    with open(vm_info_path + vm_name + ".json", "r+") as f:
+        print(f)
+        try:
+            info = json.load(f)
+            print(info)
+            info["os_family"] = json_data.get("Os_Family", "")
+            info["os_type"] = json_data.get("Os_Type", "")
+            info["os_version"] = json_data.get("Os_Version","")
+            if info.get("traffic_folder", "") == "":
+                if "" not in [info["os_family"], info["os_type"], info["os_version"]]:
+                    info["traffic_folder"] = "traffic/{}__{}__{}".format(info["os_family"], info["os_type"], info["os_version"])
+                else:
+                    info["traffic_folder"] = ""
+            f.seek(0)
+            json.dump(info, f, indent=4)
+            f.truncate()
+        except json.JSONDecodeError as e:
+            print(e)
+
 
 async def shutdown_litellm():
     try:
@@ -179,7 +201,7 @@ async def main(vagrant_box, vm_name):
         execute_commands(vagrant_box, vm_name)
         print(f"Command outputs saved to {os_info_path + vm_name + '/commands_execute.json'}")
         await get_os_info(vagrant_box, vm_name)
-        print(f"OS information saved to {os_info_path + vm_name + '/os_info.json'}")
+        print(f"OS information saved to {os_info_path + vm_name + '/os_info.json'} and {vm_info_path + vm_name + '.json'}")
     finally:
         await shutdown_litellm()
 
