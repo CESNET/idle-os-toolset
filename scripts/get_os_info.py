@@ -24,8 +24,8 @@ async def generate_commands(vagrant_box, vm_name):
     prompt = f"""
             I am utilizing the following Vagrant box: https://portal.cloud.hashicorp.com/vagrant/discover/{vagrant_box}. 
             
-            Provide the necessary commands to obtain the OS information. The commands should return the output in the terminal. The OS information should include details such as OS family, OS type, and OS version.
-            
+            Provide the necessary commands to obtain the OS information. The commands should return the output in the terminal. The OS information should include details such as OS family, OS type, and OS version. Only provide commands that are supported by the OS version used by the specified
+  Vagrant box. For newer Windows versions, do NOT use WMIC/wmic.exe. Use modern PowerShell commands instead. 
             If the Vagrant box is for an Android device, please provide the commands to retrieve the OS information from the Android device. If the Vagrant box is for a Windows machine, please provide the commands to retrieve the OS information from the Windows machine. If the Vagrant box is for a Linux machine, please provide the commands to retrieve the OS information from the Linux machine.
 
             IMPORTANT for Android: each command will already be executed inside the device shell via 'adb shell'. Therefore the commands must be the raw shell commands only (e.g. "getprop ro.build.version.release"), and must NOT start with "adb", "adb shell", or include any adb prefix.
@@ -91,7 +91,7 @@ def execute_commands(vagrant_box, vm_name):
         for command in commands:
             try:
                 command_to_run = shlex.split(remote_command.format(command))
-                result = subprocess.run(command_to_run, capture_output=True, text=True, timeout=15)
+                result = subprocess.run(command_to_run, cwd=vagrant_path+vm_name, capture_output=True, text=True, timeout=15)
                 command_outputs[command] = result.stdout
 
             except Exception as e:
