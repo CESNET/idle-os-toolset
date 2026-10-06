@@ -449,8 +449,7 @@ python3 os_info.py -h           # Show help
 
 ## Funding
 
-[FUNDING_CESNET]
-
-This work was supported by project PID2025-175049OB-I00, funded by MICIU/AEI/10.13039/501100011033 and by ERDF/EU, and by the grant ED431C 2026/56 - Competitive Reference Groups GRC - funded by Xunta de Galicia (Spain). This work was also supported by CITIC, as a center accredited for excellence within the Galician University System and a member of the CIGUS Network, which receives subsidies from the Department of Education, Science, Universities, and Vocational Training of the Xunta de Galicia. Additionally, CITIC is co-financed by the EU through the FEDER Galicia 2021–27 operational program (Ref. ED431G 2023/01). This work was also supported by the “Formación de Profesorado Universitario” (FPU) grant from the Spanish Ministry of Universities to Rubén Pérez-Jove (Grant FPU22/04418).
+This work was supported by the SOCCER project, which is funded under Grant Agreement No. 101128073 and supported by the European Cybersecurity Competence Centre. 
+This work was also supported by project PID2025-175049OB-I00, funded by MICIU/AEI/10.13039/501100011033 and by ERDF/EU, and by the grant ED431C 2026/56 - Competitive Reference Groups GRC - funded by Xunta de Galicia (Spain). This work was also supported by CITIC, as a center accredited for excellence within the Galician University System and a member of the CIGUS Network, which receives subsidies from the Department of Education, Science, Universities, and Vocational Training of the Xunta de Galicia. Additionally, CITIC is co-financed by the EU through the FEDER Galicia 2021–27 operational program (Ref. ED431G 2023/01). This work was also supported by the “Formación de Profesorado Universitario” (FPU) grant from the Spanish Ministry of Universities to Rubén Pérez-Jove (Grant FPU22/04418).
 
 
