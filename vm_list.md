@@ -45,7 +45,7 @@
 | macOS_10.14 | 2f8604a0-2519-434f-86bc-effd2e82c2ec | macos | 10 | 14.6 | traffic/macos__10__14.6 | vagrant | rubenpjove/macOS_10.14 |  |  |
 | macOS_10.15 | e5bc0086-aa67-434e-9c93-6083bd001312 | macos | 10 | 15.1 | traffic/macos__10__15.1 | vagrant | rubenpjove/macOS_10.15 |  |  |
 | manjaro_21.0 | 67c9cd33-86cb-46aa-aaaa-b2614e278b1e | linux | manjaro | 21.0 | traffic/linux__manjaro__21.0 | vagrant | rubenpjove/manjaro_21 |  |  |
-| manjaro_22.0 | 41c7b874-81b0-49f3-bb0b-b57b5a257e57 | linux | manjaro | 22.0 | traffic/linux__manjaro__22.0 | vagrant | rubenpjove/manjaro_22 |  |  |
+| manjaro_26.1 | 41c7b874-81b0-49f3-bb0b-b57b5a257e57 | linux | manjaro | 26.1.0-pre | traffic/linux__manjaro__26.1.0-pre | vagrant | rubenpjove/manjaro_22 |  |  |
 | openbsd_6.8 | 53721aa6-316b-43e2-8fbc-27fbd74fb36e | bsd | openbsd | 6.8 | traffic/bsd__openbsd__6.8 | vagrant | fnichol/openbsd-6.8 |  |  |
 | openbsd_7.0 | 079d7ace-1df0-4811-9a2e-1cc2a8e3aec1 | bsd | openbsd | 7.0 | traffic/bsd__openbsd__7.0 | vagrant | fnichol/openbsd-7.0 |  |  |
 | openbsd_7.2 | 7d33df59-1158-4c43-9e1f-dde47e922264 | bsd | openbsd | 7.2 | traffic/bsd__openbsd__7.2 | vagrant | fnichol/openbsd-7.2 |  |  |
