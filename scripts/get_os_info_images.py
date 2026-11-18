@@ -174,6 +174,7 @@ async def get_os_info(vm_name):
             "Os_Type": "...",
             "Os_Version": "..."
             }}
+            Os_Family must be exactly one of: "windows", "linux", "android", "macos", "bsd". Use "bsd" for FreeBSD, OpenBSD, NetBSD and other BSD systems; they are not Linux.
             The values should be similar to the values of this file: {vm_list}.
             """
 
@@ -190,7 +191,7 @@ async def get_os_info(vm_name):
                 "schema": {
                     "type": "object",
                     "properties": {
-                        "Os_Family": {"type": "string"},
+                        "Os_Family": {"type": "string", "enum": ["windows", "linux", "android", "macos", "bsd"]},
                         "Os_Type": {"type": "string"},
                         "Os_Version": {"type": "string"},
                     },

@@ -3,6 +3,19 @@
 All notable changes in this repository are documented in this file.
 
 
+## 2026-11-18 fix/bsd-family-manjaro-version branch
+
+### Changed
+
+- Added `bsd` OS family for FreeBSD and OpenBSD (previously `linux`).
+- `get_os_info.py` and `get_os_info_images.py` limit `Os_Family` to `windows`, `linux`, `android`, `macos` and `bsd`.
+
+### Fixed
+
+- Renamed Manjaro VM `manjaro_22.0` to `manjaro_26.1`; the `rubenpjove/manjaro_22` box runs Manjaro 26.1.0-pre.
+- Updated `vm_list.md` to match the v3 capture.
+
+
 ## [PR #1] - 2026-06-14
 
 ### Added
