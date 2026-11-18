@@ -8,6 +8,7 @@ All notable changes in this repository are documented in this file.
 ### Changed
 
 - Added `bsd` OS family for FreeBSD and OpenBSD (previously `linux`).
+- `get_os_info.py` and `get_os_info_images.py` limit `Os_Family` to `windows`, `linux`, `android`, `macos` and `bsd`.
 
 ### Fixed
 
