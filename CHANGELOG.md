@@ -13,6 +13,7 @@ All notable changes in this repository are documented in this file.
 ### Fixed
 
 - Renamed Manjaro VM `manjaro_22.0` to `manjaro_26.1`; the `rubenpjove/manjaro_22` box runs Manjaro 26.1.0-pre.
+- Updated `vm_list.md` to match the v3 capture.
 
 
 ## [PR #1] - 2026-06-14
