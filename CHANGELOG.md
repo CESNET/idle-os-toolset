@@ -3,6 +3,13 @@
 All notable changes in this repository are documented in this file.
 
 
+## 2026-11-18 fix/bsd-family-manjaro-version branch
+
+### Changed
+
+- Added `bsd` OS family for FreeBSD and OpenBSD (previously `linux`).
+
+
 ## [PR #1] - 2026-06-14
 
 ### Added
