@@ -12,7 +12,7 @@ usage() {
     echo "-l, --link: Link from where the image was downloaded"
     echo "-H, --hash: Hash of the image (in format sha256:hash/md5:hash/etc.)"
     echo "-V, --vagrant_box: Name of the vagrant box"
-    echo "-f, --os_family: Family of the operating system (windows/linux/android/macos)"
+    echo "-f, --os_family: Family of the operating system (windows/linux/android/macos/bsd)"
     echo "-t, --os_type: Type of the operating system (e.g. debian, ubuntu, centos, fedora, etc.)"
     echo "-v, --os_version: Version of the operating system"
     echo "-i, --IPv4: IPv4 address of the virtual machine"

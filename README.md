@@ -54,7 +54,7 @@ This script automatically adds the given information to the info file of a parti
 | -l           | --link              | Link from where the image was downloaded             |
 | -H           | --hash              | Hash of the image (e.g., sha256:hash, md5:hash)      |
 | -V           | --vagrant_box       | Name of the vagrant box                              |
-| -f           | --os_family         | Family of the operating system (e.g., windows, linux, android, macos) |
+| -f           | --os_family         | Family of the operating system (e.g., windows, linux, android, macos, bsd) |
 | -t           | --os_type           | Type of the operating system (e.g., debian, ubuntu, centos, fedora) |
 | -v           | --os_version        | Version of the operating system                      |
 | -i           | --IPv4              | IPv4 address of the virtual machine                  |
